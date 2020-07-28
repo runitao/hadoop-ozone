@@ -23,6 +23,7 @@ package org.apache.hadoop.ozone.om.request.key;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.hadoop.hdds.protocol.proto.HddsProtos;
 import org.apache.hadoop.ozone.OzoneConsts;
 import org.junit.Assert;
 import org.junit.Test;
@@ -180,6 +181,33 @@ public class TestOMAllocateBlockRequest extends TestOMKeyRequest {
     Assert.assertTrue(omAllocateBlockResponse.getOMResponse().getStatus()
         == OzoneManagerProtocolProtos.Status.KEY_NOT_FOUND);
 
+  }
+
+  @Test
+  public void testValidateAndUpdateCacheWithDifferentFactor() throws Exception {
+
+    OMRequest modifiedOmRequest =
+        doPreExecute(createAllocateBlockRequest());
+
+    OMAllocateBlockRequest omAllocateBlockRequest =
+        new OMAllocateBlockRequest(modifiedOmRequest);
+
+    // Add volume, bucket, key entries to DB.
+    TestOMRequestUtils.addVolumeAndBucketToDB(volumeName, bucketName,
+        omMetadataManager);
+
+    TestOMRequestUtils.addKeyToTable(true, volumeName, bucketName, keyName,
+        clientID, replicationType, replicationFactor, omMetadataManager);
+
+    // Check before calling validateAndUpdateCache. As adding DB entry has
+    // not added any blocks, so size should be zero.
+
+    OmKeyInfo omKeyInfo =
+        omMetadataManager.getOpenKeyTable().get(omMetadataManager.getOpenKey(
+            volumeName, bucketName, keyName, clientID));
+
+    Assert.assertTrue(omKeyInfo.getFactor() ==
+        HddsProtos.ReplicationFactor.ONE);
   }
 
   /**
