@@ -16,8 +16,6 @@ name: build-branch
 on:
   pull_request:
   push:
-  schedule:
-    - cron: 30 0,12 * * *
 jobs:
   build:
     name: compile
